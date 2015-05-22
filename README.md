@@ -6,6 +6,7 @@ This is mainly written using **Python**, **LaTex**, **VRML**, and **Open Invento
 
 ### Notes
 
-- This is only part of the software that may not be used for any purpose and therefore, is *not stand-alone*. 
+- This is only part of the software and therefore, is *not stand-alone*.
+- This is part of a *copyrighted software* and may not be used for any purpose.
 - The code is uploaded here merely to show my coding styles and skills.
 - *Sample reports and outputs* are uploaded to give you an experience of how they look like.
