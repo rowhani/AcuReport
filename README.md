@@ -7,4 +7,5 @@ This is mainly written using **Python**, **LaTex**, **VRML**, and **Open Invento
 ### Notes
 
 - This is only part of the software and teherfore, is *not stand-alone*. 
+- The code is uploaded here merely to show my coding styles and skills.
 - *Sample reports and outputs* are uploaded to give you an experience of how they look like.
