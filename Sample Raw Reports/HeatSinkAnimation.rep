@@ -1,0 +1,123 @@
+#===========================================================================
+#
+# "HeatSinkAnimation.rep": Generate a report contaning an Animation 
+#                          for the HeatSink problem
+#
+# 	To get a report, execute:
+#		acuReport -problem HS -file HeatSinkAnimation.rep -pdf
+#
+#===========================================================================
+
+import os
+
+#===========================================================================
+# Open a document
+#===========================================================================
+
+rep	= Report( "HeatSinkAnimation.tex" )
+
+#===========================================================================
+# Set up the vis object
+#===========================================================================
+
+vis	= AcuVis( )
+
+#===========================================================================
+# Front Page
+#===========================================================================
+
+rep.addCFDCalcLogo( length = 600 )
+rep.addSpace( 2 )
+
+rep.addTitle( "Heat Sink U3D Animation\\\\Version 1.0" )
+rep.addDate( )	
+
+rep.fillVSpace( )
+rep.addText( "\\emph{Product of CFDCalc}", "center" )
+rep.addText( "http://www.cfdcalc.com", "center" )
+
+rep.newPage( )
+
+#===========================================================================
+# U3D Animation
+#===========================================================================
+
+#----- Setup Scene
+
+nVols	= vis.getNVols( )
+for i in range( nVols ): 
+	vis.getVolActor( i ).setVisibility( 'off' )
+
+srfMap = [ [ "inflow", 			"outline", 			[0, 0, 1.0], 		'on' 	],
+		   [ "outflow", 		"outline", 			[0, 0, 1.0], 		'on' 	],
+		   [ "side 1", 			"outline", 			[0, 0, 1.0], 		'on' 	],
+		   [ "side 2", 			"outline", 			[0, 0, 1.0], 		'on' 	],
+		   [ "bottom", 			"outline", 			[0, 0, 1.0], 		'on' 	],
+		   [ "top", 			"outline", 			[0, 0, 1.0], 		'on' 	],
+		   [ "wall", 			"contour", 			[0, 0, 1.0], 		'on' 	],
+		   [ "board/chip", 		"solid", 			[0.5, 0.25, 0.0], 	'on' 	],
+		   [ "board",  			"solid_outline",	[0.5, 0.25, 0.0], 	'on' 	],
+		  #[ "chip", 			"solid", 			[0.5, 0.5, 0.5], 	'on' 	],
+		   [ "heat sink/chip", 	"solid", 			[1.0, 0.5, 0.0], 	'on' 	],
+		   [ "heat sink", 		"solid", 			[1.0, 0.5, 0.0], 	'on' 	] ]
+	
+#----- Create the temperature view
+								  
+vis.setCmap( )
+vis.setSclrVar( "temperature" )
+vis.setSclrLimits( 30, 55 )
+
+for srfProp in srfMap:
+	srf = vis.getSrfActor( srfProp[0] )
+	srf.display( srfProp[1] )
+	srf.color( srfProp[2][0], srfProp[2][1], srfProp[2][2] )
+	srf.setVisibility( srfProp[3] )
+
+#----- Create and add the animation
+
+rep.addSection( "HeatSink U3D Animation" )
+
+nSteps	       = vis.getNSteps( )			
+sceneGraphList = vis.getSceneGraphListForTimeSteps( timeStepRange = [0, nSteps] )
+ 
+rep.addU3DAnimation( sceneGraphList  		= sceneGraphList,
+					 u3dFileName     		= "Figures/HeatSinkAnimation.u3d",
+					 width           		= None,
+                     height              	= None,
+                     justify             	= None,
+                     bgColor             	= None,
+                     renderMode          	= None,
+                     mergeMeshGroups     	= True,
+                     mergeMeshSets       	= True,
+                     regroupNodes        	= True,
+                     flattenDataTree     	= True,
+                     reduceMeshSets      	= True,                                
+                     playMS              	= 500,
+                     delayMS              	= 100,
+                     speedFactor          	= 1.2,
+					 loopAnimation			= True,
+                     animationControlList	= None,
+					 displayTimeStepNum     = True,
+                     displayGuideFootnote   = True,
+					 createDisplayControl	= True,
+					 fct					= None )
+
+#===========================================================================
+# Close the report and make PDF
+#===========================================================================
+
+rep.close( )
+
+rep.writePdf( )
+
+#===========================================================================
+# Remove temporary files
+#===========================================================================
+
+try:
+	dir  = "Figures"
+	for file in os.listdir( "Figures" ):
+		os.remove( os.path.join( dir, file ) )
+	os.rmdir( dir )
+except:
+	pass

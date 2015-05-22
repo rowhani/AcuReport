@@ -1,0 +1,300 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+           "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<meta name="GENERATOR" content="TtH 3.87">
+ <style type="text/css"> div.p { margin-top: 7pt;}</style>
+ <style type="text/css"><!--
+ td div.comp { margin-top: -0.6ex; margin-bottom: -1ex;}
+ td div.comb { margin-top: -0.6ex; margin-bottom: -.6ex;}
+ td div.hrcomp { line-height: 0.9; margin-top: -0.8ex; margin-bottom: -1ex;}
+ td div.norm {line-height:normal;}
+ span.roman {font-family: serif; font-style: normal; font-weight: normal;} 
+ span.overacc2 {position: relative;  left: .8em; top: -1.2ex;}
+ span.overacc1 {position: relative;  left: .6em; top: -1.2ex;} --></style>
+
+
+
+
+
+
+
+   
+<center><img  width="401"  height="80" src="./Figures/AcusimLogo.png"" alt="./Figures/AcusimLogo.png" />
+</center>
+&nbsp; <br />
+
+<center>
+<font size="+2">   P<font size="-2">UMP</font> A<font size="-2">NALYSIS</font> P<font size="-2">ERFORMED</font> <font size="-2">BY</font> A<font size="-2">CU</font>S<font size="-2">OLVE</font><br />P<font size="-2">UMP</font> <br />
+</font></center>
+ <br />
+
+<center>
+<font size="+1">   D<font size="-2">R</font>. F<font size="-2">ARZIN</font> S<font size="-2">HAKIB</font> <br />
+</font></center>
+ <br />
+
+<center>
+ACUSIM Software, Inc.<br />
+</center>
+
+<center>
+Mon Jun 28 13:49:24 2010<br />
+</center>
+ <br />
+
+
+<center>
+<em>ACUSIM Software, Inc. 2685 Marine Way, Suite 1421, Mountain View, California 94043</em><br />
+</center>
+
+<center>
+Tel: (650) 988-9700 Fax: (650) 988-9770 <a href="mailto:info@acusim.com">info@acusim.com</a> http://www.acusim.com<br />
+</center>
+
+
+
+
+<h1>Contents </h1><a href="#tth_sEc1"
+>1&nbsp; Background</a><br />
+<a href="#tth_sEc2"
+>2&nbsp; Problem description</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#tth_sEc2.1"
+>2.1&nbsp; Mesh</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#tth_sEc2.2"
+>2.2&nbsp; Solver Settings</a><br />
+<a href="#tth_sEc3"
+>3&nbsp; Results</a><br />
+<a href="#tth_sEc4"
+>4&nbsp; Conclusions</a><br />
+
+
+
+
+
+ <h2><a name="tth_sEc1">
+1</a>&nbsp;&nbsp;Background</h2>
+
+<div class="p"><!----></div>
+Some background information.
+<br />
+
+
+
+
+ <h2><a name="tth_sEc2">
+2</a>&nbsp;&nbsp;Problem description</h2>
+
+<div class="p"><!----></div>
+The geometry is given in Figure <a href="#fig:geom">1</a>.
+<br />
+
+<div class="p"><!----></div>
+<a name="tth_fIg1">
+</a> 
+<center><img  width="600"  height="400" src="./Figures/Image_0.png"" alt="./Figures/Image_0.png" />
+
+<center>Figure 1: <a name="fig:geom">
+</a>Geometry of the problem</center>
+</center>
+
+<div class="p"><!----></div>
+     <h3><a name="tth_sEc2.1">
+2.1</a>&nbsp;&nbsp;Mesh</h3>
+
+<div class="p"><!----></div>
+The geometry is given in Figure <a href="#fig:mesh">2</a>.
+<br />
+
+<div class="p"><!----></div>
+<a name="tth_fIg2">
+</a> 
+<center><img  width="600"  height="400" src="./Figures/Image_1.png"" alt="./Figures/Image_1.png" />
+
+<center>Figure 2: <a name="fig:mesh">
+</a>Geometry of the mesh</center>
+</center>
+
+<div class="p"><!----></div>
+     <h3><a name="tth_sEc2.2">
+2.2</a>&nbsp;&nbsp;Solver Settings</h3>
+Material model is given by:<br /><br />
+Material Model for Fluid 'Water'<br />
+
+<ul>
+<li><em>Density Model</em>
+
+<div class="p"><!----></div>
+
+<ul>
+<li><em>Type = Constant</em>
+<div class="p"><!----></div>
+</li>
+
+<li><em>Density = 1000.0</em>
+<div class="p"><!----></div>
+</li>
+
+<li><em>Isothermal compressibility = 0.0</em>
+<div class="p"><!----></div>
+</li>
+</ul>
+<div class="p"><!----></div>
+</li>
+
+<li><em>Viscosity Model</em>
+
+<div class="p"><!----></div>
+
+<ul>
+<li><em>Type = Constant</em>
+<div class="p"><!----></div>
+</li>
+
+<li><em>Viscosity = 0.001</em>
+<div class="p"><!----></div>
+</li>
+
+<li><em>Multiplier function = None</em>
+<div class="p"><!----></div>
+</li>
+</ul>
+<div class="p"><!----></div>
+</li>
+</ul>
+Rotational speed is 10<br />
+
+<div class="p"><!----></div>
+<a name="tth_fIg3">
+</a> 
+<center><img  width="600"  height="400" src="./Figures/plot_1.png"" alt="./Figures/plot_1.png" />
+
+<center>Figure 3: <a name="fig:mp">
+</a>Fan performance</center>
+</center>
+
+<div class="p"><!----></div>
+
+<div class="p"><!----></div>
+<a name="tth_tAb1">
+</a> 
+<center>
+<table border="1">
+<tr><td align="left">Pressure Drop (Pa) </td><td align="left">Mass Flux (Kg/sec) </td></tr>
+<tr><td align="left">2506.57 </td><td align="left">-2.00 </td></tr>
+<tr><td align="left">13707.15 </td><td align="left">-4.00 </td></tr>
+<tr><td align="left">24949.46 </td><td align="left">-6.00 </td></tr>
+<tr><td align="left">36406.80 </td><td align="left">-8.00 </td></tr>
+<tr><td align="left">48129.20 </td><td align="left">-10.00 </td></tr></table>
+
+
+<center>Table 1: <a name="tab:mp">
+</a>
+Fan performance</center>
+</center>
+
+<div class="p"><!----></div>
+The fan performance curve is given in Figure <a href="#fig:mp">3</a> and Table
+<a href="#tab:mp">1</a>
+<br />
+
+
+
+
+ <h2><a name="tth_sEc3">
+3</a>&nbsp;&nbsp;Results</h2>
+
+<div class="p"><!----></div>
+The results are given in the following figures.
+<br />
+
+<div class="p"><!----></div>
+The pressure distribution are shown in the following figures.
+<br />
+
+<div class="p"><!----></div>
+<a name="tth_fIg4">
+</a> 
+<center>
+<table>
+<tr><td width="276"><img  width="211"  height="141" src="./Figures/Image_2.png"" alt="./Figures/Image_2.png" />
+ </td><td width="276"><img  width="211"  height="141" src="./Figures/Image_3.png"" alt="./Figures/Image_3.png" />
+ </td></tr>
+<tr><td width="276">a. mass flux = -2 </td><td width="276">b. mass flux = -4 </td></tr>
+<tr><td width="276"><img  width="211"  height="141" src="./Figures/Image_4.png"" alt="./Figures/Image_4.png" />
+ </td><td width="276"><img  width="211"  height="141" src="./Figures/Image_5.png"" alt="./Figures/Image_5.png" />
+ </td></tr>
+<tr><td width="276">c. mass flux = -6 </td><td width="276">d. mass flux = -8 </td></tr>
+<tr><td width="276"><img  width="211"  height="141" src="./Figures/Image_6.png"" alt="./Figures/Image_6.png" />
+ </td><td width="276"></td></tr>
+<tr><td width="276">e. mass flux = -10 </td><td width="276"></td></tr></table>
+
+
+<center>Figure 4: <a name="fig:pres">
+</a>
+Pressure contour on center plane</center>
+</center>
+
+<div class="p"><!----></div>
+The velocity distribution are shown in the following figures.
+<br />
+
+<div class="p"><!----></div>
+<a name="tth_fIg5">
+</a> 
+<center>
+<table>
+<tr><td align="center"><img  width="211"  height="141" src="./Figures/Image_7.png"" alt="./Figures/Image_7.png" />
+ </td><td align="center"><img  width="211"  height="141" src="./Figures/Image_8.png"" alt="./Figures/Image_8.png" />
+ </td></tr>
+<tr><td align="center">a. mass flux = -2 </td><td align="center">b. mass flux = -4 </td></tr>
+<tr><td align="center"><img  width="211"  height="141" src="./Figures/Image_9.png"" alt="./Figures/Image_9.png" />
+ </td><td align="center"><img  width="211"  height="141" src="./Figures/Image_10.png"" alt="./Figures/Image_10.png" />
+ </td></tr>
+<tr><td align="center">c. mass flux = -6 </td><td align="center">d. mass flux = -8 </td></tr>
+<tr><td align="center"><img  width="211"  height="141" src="./Figures/Image_11.png"" alt="./Figures/Image_11.png" />
+ </td><td align="center"></td></tr>
+<tr><td align="center">e. mass flux = -10 </td><td align="center"></td></tr></table>
+
+
+<center>Figure 5: <a name="fig:vel">
+</a>
+Velocity vector on center plane</center>
+</center>
+
+<div class="p"><!----></div>
+Several samples of clipping are shown in the following figures.
+<br />
+
+<div class="p"><!----></div>
+<a name="tth_fIg6">
+</a> 
+<center>
+<table>
+<tr><td align="center"><img  width="211"  height="141" src="./Figures/Fully-TransparentUPClipPlane.png"" alt="./Figures/Fully-TransparentUPClipPlane.png" />
+ </td><td align="center"><img  width="211"  height="141" src="./Figures/90-TransparentDownClipPlane.png"" alt="./Figures/90-TransparentDownClipPlane.png" />
+ </td></tr>
+<tr><td align="center">Fully-Transparent 'Up' Clip Plane </td><td align="center">90%-Transparent 'Down' Clip Plane </td></tr>
+<tr><td align="center"><img  width="211"  height="141" src="./Figures/Fully-TransparentMaxClipBox.png"" alt="./Figures/Fully-TransparentMaxClipBox.png" />
+ </td><td align="center"><img  width="211"  height="141" src="./Figures/90-TransparentMaxClipBox.png"" alt="./Figures/90-TransparentMaxClipBox.png" />
+ </td></tr>
+<tr><td align="center">Fully-Transparent 'Max' Clip Box </td><td align="center">90%-Transparent 'Max' Clip Box </td></tr>
+<tr><td align="center"><img  width="211"  height="141" src="./Figures/Fully-TransparentMinClipBox.png"" alt="./Figures/Fully-TransparentMinClipBox.png" />
+ </td><td align="center"><img  width="211"  height="141" src="./Figures/90-TransparentPrepMinClipBox.png"" alt="./Figures/90-TransparentPrepMinClipBox.png" />
+ </td></tr>
+<tr><td align="center">Fully-Transparent 'Min' Clip Box </td><td align="center">90%-Transparent [Prep by a Clip-Plane] 'Min' Clip Box </td></tr></table>
+
+
+<center>Figure 6: <a name="fig:clp">
+</a>
+Clipping Samples</center>
+</center>
+
+<div class="p"><!----></div>
+ <h2><a name="tth_sEc4">
+4</a>&nbsp;&nbsp;Conclusions</h2>
+
+<div class="p"><!----></div>
+Some conclusion goes here
+<br />
+
+</html>

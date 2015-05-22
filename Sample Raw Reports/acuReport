@@ -1,0 +1,117 @@
+#!/bin/sh -
+
+#===========================================================================
+#
+# "acuReport":  Starter script to run acuReport
+#
+# Needs environment variables:
+#
+#       ACUSIM_HOME             - Acusim home directory
+#       ACUSIM_MACHINE          - Machine type
+#       ACUSIM_VERSION          - Release
+#
+# These can be found in .acusim
+#
+#===========================================================================
+
+#---------------------------------------------------------------------------
+# Set the name
+#---------------------------------------------------------------------------
+
+ACUSIM_PROG_NAME=$0
+export ACUSIM_PROG_NAME
+
+#---------------------------------------------------------------------------
+# Check the env vars
+#---------------------------------------------------------------------------
+
+if [ ! -n "$ACUSIM_HOME" ] ; then
+    echo "*** ERROR ACUSIM_HOME not defined; find and source .acusim"
+    exit 1
+fi
+
+if [ ! -n "$ACUSIM_VERSION" ] ; then
+    echo "*** ERROR ACUSIM_VERSION not defined; find and source .acusim"
+    exit 1
+fi
+
+if [ ! -n "$ACUSIM_MACHINE" ] ; then
+    echo "*** ERROR ACUSIM_MACHINE not defined; find and source .acusim"
+    exit 1
+fi
+
+#---------------------------------------------------------------------------
+# Get the addresses
+#---------------------------------------------------------------------------
+
+baseDir="$ACUSIM_HOME/$ACUSIM_MACHINE/$ACUSIM_VERSION/base"
+libDir="$ACUSIM_HOME/$ACUSIM_MACHINE/$ACUSIM_VERSION/base/lib"
+binDir="$ACUSIM_HOME/$ACUSIM_MACHINE/$ACUSIM_VERSION/base/bin"
+abinDir="$ACUSIM_HOME/$ACUSIM_MACHINE/$ACUSIM_VERSION/bin"
+scrDir="$ACUSIM_HOME/$ACUSIM_MACHINE/$ACUSIM_VERSION/script"
+
+#---------------------------------------------------------------------------
+# Check the directories
+#---------------------------------------------------------------------------
+
+if [ ! -d "$binDir" ] ; then
+    echo "*** ERROR directory $binDir not found"
+    exit 1
+fi
+
+if [ ! -d "$libDir" ] ; then
+    echo "*** ERROR directory $libDir not found"
+    exit 1
+fi
+
+if [ ! -d "$scrDir" ] ; then
+    echo "*** ERROR directory $scrDir not found"
+    exit 1
+fi
+
+#---------------------------------------------------------------------------
+# Add script directory
+#---------------------------------------------------------------------------
+
+PYTHONHOME=$baseDir
+export PYTHONHOME
+
+PYTHONPATH=$scrDir:$binDir:$PYTHONPATH
+export PYTHONPATH
+
+#---------------------------------------------------------------------------
+# Find libraries
+#---------------------------------------------------------------------------
+
+LD_LIBRARY_PATH=
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$abinDir
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$libDir
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$libDir/python2.4/config
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$libDir/python2.4/site-packages
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$libDir/python2.4/site-packages/Qwt4
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$libDir/python2.4/site-packages/gone
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$libDir/qt3.3/lib
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$libDir/lib
+
+LD_LIBRARYN32_PATH=$LD_LIBRARY_PATH
+SHLIB_PATH=$LD_LIBRARY_PATH
+
+export LD_LIBRARY_PATH
+export LD_LIBRARYN32_PATH
+export SHLIB_PATH
+
+#---------------------------------------------------------------------------
+# Coin specific variables
+#---------------------------------------------------------------------------
+
+export COIN_FULL_INDIRECT_RENDERING=1
+export COIN_DONT_INFORM_INDIRECT_RENDERING=1
+
+#---------------------------------------------------------------------------
+# Run acuReport
+#---------------------------------------------------------------------------
+
+cmd="import sys ; sys.path.insert(0,'$scrDir/Report.zip') ; import repMain"
+
+$binDir/python -c "$cmd" $*
+

@@ -1,0 +1,796 @@
+#===========================================================================
+#
+# "HeatSink.rep": Generate a report for the HeatSink problem
+#
+# 	To get a report, execute:
+#		acuReport -problem HS -file HeatSink.rep -pdf
+#
+#===========================================================================
+
+import string
+import os
+
+#===========================================================================
+# Open a document
+#===========================================================================
+
+rep	= Report( "HeatSink.tex" )
+
+#===========================================================================
+# Open the model and solution
+#===========================================================================
+
+acs	= Acs( )
+
+repAcs	= ReportAcs( rep, acs )
+
+adb	= Adb( )
+
+#===========================================================================
+# Set up the vis object
+#===========================================================================
+
+vis	= AcuVis( )
+
+#===========================================================================
+# Front Page
+#===========================================================================
+
+nodeDesc	= ROOT + RS + 'ANALYSIS'
+
+title = string.capwords( acs.getStr( par = "title", path = nodeDesc ) )
+sub_title = string.capwords( acs.getStr( par = "sub_title", path = nodeDesc ) )
+
+rep.addCFDCalcLogo( length = 600 )
+rep.addSpace( 2 )
+
+rep.addTitle( "Heat Sink Calculator\\\\Version 1.0" )
+rep.addText( title + "\\\\" + sub_title, "center" )
+rep.addDate( )	
+
+rep.fillVSpace( )
+rep.addText( "\\emph{Product of CFDCalc}", "center" )
+rep.addText( "http://www.cfdcalc.com", "center" )
+
+rep.newPage( )
+rep.addTableOfContent( )
+rep.newPage( )
+
+#===========================================================================
+# Problem Description
+#===========================================================================
+
+rep.addSection( "Problem Description" )
+rep.addText( """
+Heatsink design is one of the most important part of electronic design.
+This report presents parametric heatsink solutions based 
+on AcuSolve software suite for advanced CFD simulations. A series of 
+test cases can be computed with multiple airflow simulations, at 
+variour flow rates. The simulations can help you choose the best 
+heatsink solution, whether hermal performance or a combination of 
+factors such as cost, weight, or influence on the overall system 
+pressure drop.
+""" )
+
+#===========================================================================
+# Model Setup
+#===========================================================================
+
+rep.addSection( "Model Setup" )
+rep.addText( """
+The geometry CAD files are created using 
+""" )
+
+rep.addSubSection( "CAD Properties" )
+rep.addText( """
+In this section, you can see the CAD
+properties and views as well as an interactive view of
+the heat sink problem.
+""" )
+
+node = ROOT + RS + 'User' + RS + 'HEAT_SINK'
+
+cadData = []
+
+#----- Tunnel Info
+
+tunlSize = acs.getArray( par = 'tunnel_size', path = node, unit = 'mm' )
+cadData.append( [ "Tunnel Dimensions:", "%.2f x %.2f x %.2f $mm^3$" % tuple( tunlSize ) ] )
+
+#----- Board Info
+
+brdSize = acs.getArray( par = 'board_size', path = node, unit = 'mm' )
+cadData.append( [ "Board Dimensions:", "%.2f x %.2f x %.2f $mm^3$" % tuple( brdSize ) ] )
+
+#----- Chip Info
+
+chipSize = acs.getArray( par = 'chip_size', path = node, unit = 'mm' )
+cadData.append( [ "Chip Dimensions:", "%.2f x %.2f x %.2f $mm^3$" % tuple( chipSize ) ] )
+
+#----- Heat Sink Info
+
+hsType = acs.getEnum( par = 'heat_sink_type', path = node )
+cadData.append( [ "Heat Sink Type:", string.capwords( hsType.replace( "_", " " ) ) ] )
+
+hsSize = acs.getArray( par = 'heat_sink_size', path = node, unit = 'mm' )
+cadData.append( [ "Heat Sink Dimensions:", "%.2f x %.2f x %.2f $mm^3$" % tuple( hsSize ) ] )
+
+hsBaseHeight = acs.getReal( par = 'heat_sink_base_height', path = node, unit = "mm" ) 
+cadData.append( [ "Heat Sink Base Height:", "%.2f mm" % hsBaseHeight ] )
+
+heatSinkType = hsType.lower()
+if heatSinkType == "cross cut":
+	finXwidth = acs.getReal( par = 'fin_x_width', path = node, unit = "mm" )
+	cadData.append( [ "Fin X-Width:", "%.2f mm" % finXwidth ] )
+
+	finXgap = acs.getReal( par = 'fin_x_gap', path = node, unit = "mm" )
+	cadData.append( [ "Fin X-Gap:", "%.2f mm" % finXgap ] )
+	
+	finXnum = acs.getInt( par = 'fin_x_num', path = node )
+	cadData.append( [ "Number of X-Fins:", finXnum ] )
+
+	sideXgap = acs.getReal( par = 'side_x_gap', path = node, unit = "mm" )
+	cadData.append( [ "Side X-Gap:", "%.2f mm" % sideXgap ] )
+	
+	finYwidth = acs.getReal( par = 'fin_y_width', path = node, unit = "mm" )
+	cadData.append( [ "Fin Y-Width:", "%.2f mm" % finYwidth ] )
+
+	finYgap = acs.getReal( par = 'fin_y_gap', path = node, unit = "mm" )
+	cadData.append( [ "Fin Y-Gap:", "%.2f mm" % finYgap ] )
+
+	finYnum = acs.getInt( par = 'fin_y_num', path = node )
+	cadData.append( [ "Number of Y-Fins", finYnum ] )
+
+	sideYgap = acs.getReal( par = 'side_y_gap', path = node, unit = "mm" )
+	cadData.append( [ "Side Y-Gap:", "%.2f mm" % sideYgap ] )
+	
+elif heatSinkType == "extrusion":
+	
+	finYwidth = acs.getReal( par = 'ex_fin_y_width', path = node, unit = "mm" )
+	cadData.append( [ "Fin Y-Width:", "%.2f mm" % finYwidth ] )
+
+	finYgap = acs.getReal( par = 'ex_fin_y_gap', path = node, unit = "mm" )
+	cadData.append( [ "Fin Y-Gap:", "%.2f mm" % finYgap ] )
+
+	finYnum = acs.getInt( par = 'ex_fin_y_num', path = node )
+	cadData.append( [ "Number of Y-Fins:",  finYnum ] )
+
+	sideYgap = acs.getReal( par = 'ex_side_y_gap', path = node, unit = "mm" )
+	cadData.append( [ "Side Y-Gap:", "%.2f mm" % sideYgap ] )
+
+elif heatSinkType == "diamond cut":
+	
+	finWidth = acs.getReal( par = 'dc_fin_width', path = node, unit = "mm" )
+	cadData.append( [ "Fin Width:", "%.2f mm" % finWidth ] )
+
+	finGap = acs.getReal( par = 'dc_fin_gap', path = node, unit = "mm" )
+	cadData.append( [ "Fin Gap:", "%.2f mm" % finGap ] )
+
+	finNum = acs.getInt( par = 'dc_fin_num', path = node )
+	cadData.append( [ "Number Fins:",  finNum ] )
+
+elif heatSinkType == "pin fin":
+	
+	arangment = acs.getEnum( par = 'pf_arrangement', path = node	)
+	if arangment == "inLine": arangment = "In-line"
+	if arangment == "staggered": arangment = "Staggered"	
+	cadData.append( [ "Arrangement:", arangment ] )
+	
+	diameter = acs.getReal( par = 'pf_pin_diameter', path = node, unit = "mm" )
+	cadData.append( [ "Pin Diameter:", "%.2f mm" % diameter ] )
+
+	finGap = acs.getReal( par = 'pf_fin_gap', path = node, unit = "mm" )
+	cadData.append( [ "Fin Gap:", "%.2f mm" % finGap ] )
+
+	angle = acs.getReal( par = 'pf_angle', path = node, unit = "deg" )
+	cadData.append( [ "Draft Angle:", "%.2f deg" % angle ] )
+
+	finNum = acs.getInt( par = 'pf_fin_num', path = node )
+	cadData.append( [ "Number Fins:", finNum ] )
+	
+if heatSinkType != "none" and False:
+	heatSinkWeight	= acs.getReal( par = "heat_sink_weight", path = node, unit = "g" )
+	cadData.append( [ "Heat Sink Weight:", "%.2f g" % heatSinkWeight ] )
+
+meshDensity = acs.getEnum( par = 'mesh_density', path = node )
+wrtMshDenData = string.capwords( meshDensity.replace( "_", " " ) )
+wrtMshDenData = wrtMshDenData[0].upper() + wrtMshDenData[1:]
+cadData.append( [ "Mesh Density:",  wrtMshDenData ] )
+	
+thetaJC = acs.getReal( par = 'theta_jc', path = node ) 
+cadData.append( [ "Package Theta JC:", "%.2f " % thetaJC ] )
+
+thetaJB = acs.getReal( par = 'theta_jb', path = node ) 
+cadData.append( [ "Package Theta JB:", "%.2f " % thetaJB ] )
+
+fldMatModel = acs.getRef( par = 'fluid_material_model', path = node ) 
+cadData.append( [ "Fluid Material Model:", "%s " % fldMatModel ] )
+
+HeatSinkMatModel = acs.getRef( par = 'sink_material_model', path = node ) 
+cadData.append( [ "Heat Sink Material model:", "%s " % HeatSinkMatModel ] )
+
+advancedFeat = acs.getBool( par = 'advanced_features', path = node )
+
+if advancedFeat:
+	coprCond = acs.getReal( par = 'k_cu', path = node, unit = 'W/m-K' )
+	cadData.append( [ "Copper Conductivity:", "%.2f " % coprCond ] )
+
+	dielcCond = acs.getReal( par = 'k_die', path = node, unit = 'W/m-K' )
+	cadData.append( [ "Dielectric Conductivity:", "%.2f " % dielcCond ] )
+
+	thikoz = acs.getReal( par = 't_1oz_cu', path = node, unit = 'inch' )
+	cadData.append( [ "Thickness of 1 oz Copper:", "%.2f " % thikoz ] )
+	
+bordrLayr = acs.getArray( par = 'board_layer_par', path = node )
+cadData.append( [ "Board Layer Parameters:", "%s " % bordrLayr ] )
+
+solCases = acs.getArray( par = 'solution_cases', path = node, unit = 'm/sec:K:W' )
+cadData.append( [ "Solution Cases, Air Speed:", "%s m/sec" % solCases[:,0] ] )
+cadData.append( [ "Solution Cases, Temperature:", "%s K" % solCases[:,1] ] )
+cadData.append( [ "Solution Cases, Chip Power:", "%s W" % solCases[:,2] ] )
+
+rep.addText( "The following are the user input data for heat sink problem:" )
+rep.addTabular( cadData, justify = 'flushleft', border = False )
+
+rep.newPage( )
+
+'''rep.beginBullet( )
+
+#----- Tunnel Info
+
+rep.addItem( "", "Tunnel" )
+
+rep.beginBullet( )
+rep.addItem( "", "Dimensions" )
+tunlSize = acs.getArray( par = 'tunnel_size', path = node )
+rep.beginBullet( )
+rep.addItem( "",  "%s: %.1f mm" % ( "Length", tunlSize[0] ) )
+rep.addItem( "",  "%s: %.1f mm" % ( "Width", tunlSize[1] ) )
+rep.addItem( "",  "%s: %.1f mm" % ( "Height", tunlSize[2] ) )
+rep.endBullet( )
+rep.endBullet( )
+
+#----- Board Info
+
+rep.addItem( "", "Board" )
+
+rep.beginBullet( )
+rep.addItem( "", "Dimensions" )
+brdSize = acs.getArray( par = 'board_size', path = node )
+rep.beginBullet( )
+rep.addItem( "",  "%s: %.1f mm" % ( "Length", brdSize[0] ) )
+rep.addItem( "",  "%s: %.1f mm" % ( "Width", brdSize[1] ) )
+rep.addItem( "",  "%s: %.1f mm" % ( "Height", brdSize[2] ) )
+rep.endBullet( )
+rep.endBullet( )
+
+#----- Chip Info
+
+rep.addItem( "", "Chip" )
+
+rep.beginBullet( )
+rep.addItem( "", "Dimensions" )
+chipSize = acs.getArray( par = 'chip_size', path = node )
+rep.beginBullet( )
+rep.addItem( "",  "%s: %.1f mm" % ( "Length", chipSize[0] ) )
+rep.addItem( "",  "%s: %.1f mm" % ( "Width", chipSize[1] ) )
+rep.addItem( "",  "%s: %.1f mm" % ( "Height", chipSize[2] ) )
+rep.endBullet( )
+rep.endBullet( )
+
+#----- HeatSink Info
+
+rep.addItem( "", "Heat Sink" )
+
+rep.beginBullet( )
+rep.addItem( "", "Type" )
+hsType = acs.getEnum( par = 'heat_sink_type', path = node )
+rep.beginBullet( )
+rep.addItem( "", "%s: %s" %( "Type", string.capwords( hsType.replace( "_", " " ) ) ) )
+rep.endBullet()
+rep.endBullet()
+
+rep.beginBullet( )
+rep.addItem( "", "Dimensions" )
+rep.beginBullet( )
+hsSize = acs.getArray( par = 'heat_sink_size', path = node )
+rep.addItem( "",  "%s: %.1f mm" % ( "Length", hsSize[0] ) )
+rep.addItem( "",  "%s: %.1f mm" % ( "Width", hsSize[1] ) )
+rep.addItem( "",  "%s: %.1f mm" % ( "Height", hsSize[2] ) )
+hsBaseHeight = acs.getReal( par = 'heat_sink_base_height', path = node, unit = "mm" )
+rep.addItem( "",  "%s: %.1f mm" % ( "Base Height", hsBaseHeight ) )
+rep.endBullet( )
+rep.endBullet( )
+
+#ep.beginBullet( )
+#rep.addItem( "", "Resolve" )
+#resolve = acs.getEnum( par = 'resolve', path = node )
+#rep.beginBullet( )
+#rep.addItem( "", "%s: %s" %( "Type", string.capwords( resolve.replace( "_", " " ) ) ) )
+#rep.endBullet()
+#rep.endBullet()
+
+rep.beginBullet( )
+rep.addItem( "", "Cross Out" )
+rep.beginBullet( )
+finXwidth = acs.getReal( par = 'fin_x_width', path = node, unit = "mm"  )
+rep.addItem( "",  "%s: %.1f mm" % ( "Fin X-Width", finXwidth ) )
+finXgap = acs.getReal( par = 'fin_x_gap', path = node, unit = "mm"  )
+rep.addItem( "",  "%s: %.1f mm" % ( "Fin X-Gap", finXgap ) )
+#finXnum = acs.getReal( par = 'fin_x_num', path = node, unit = "mm"  )
+#rep.addItem( "",  "%s: %.1f mm" % ( "Number of X-Fins", finXnum ) )
+#sideXgap = acs.getReal( par = 'side_x_gap', path = node, unit = "mm"  )
+#rep.addItem( "",  "%s: %.1f mm" % ( "Side X-Gap", sideXgap ) )
+rep.endBullet( )
+rep.beginBullet( )
+finYwidth = acs.getReal( par = 'fin_y_width', path = node, unit = "mm"  )
+rep.addItem( "",  "%s: %.1f mm" % ( "Fin Y-Width", finYwidth ) )
+finYgap = acs.getReal( par = 'fin_y_gap', path = node, unit = "mm"  )
+rep.addItem( "",  "%s: %.1f mm" % ( "Fin Y-Gap", finYgap ) )
+#finYnum = acs.getReal( par = 'fin_y_num', path = node, unit = "mm"  )
+#rep.addItem( "",  "%s: %.1f mm" % ( "Number of Y-Fins", finYnum ) )
+#sideYgap = acs.getReal( par = 'side_y_gap', path = node, unit = "mm"  )
+#rep.addItem( "",  "%s: %.1f mm" % ( "Side Y-Gap", sideYgap ) )
+rep.endBullet( )
+rep.endBullet( )
+
+rep.endBullet( )
+
+rep.newPage( )'''
+
+#===========================================================================
+# CAD View
+#===========================================================================
+
+rep.addSubSubSection( "CAD View" )
+
+vis.setBgColor( color = ( 1, 1, 1 ) )
+vis.toggleLogo( )
+
+#----- Setup Scene Graph
+
+nVols	= vis.getNVols( )
+for i in range( nVols ):
+	vis.getVolActor( i ).setVisibility( 'off' )
+
+srfMap = [ 
+[ "inflow", 		"outline", 	[0, 0, 1.0], 		'on' ],
+[ "outflow", 		"outline", 	[0, 0, 1.0], 		'on' ],
+[ "side 1", 		"outline", 	[0, 0, 1.0], 		'on' ],
+[ "side 2", 		"outline", 	[0, 0, 1.0], 		'on' ],
+[ "bottom", 		"outline", 	[0, 0, 1.0], 		'on' ],
+[ "top", 		"outline", 	[0, 0, 1.0], 		'on' ],
+[ "wall", 		"outline", 	[0, 0, 1.0], 		'off' ],
+[ "board/chip", 	"solid", 	[0.5, 0.25, 0.0], 	'on' ],
+[ "board", 		"solid", 	[0.5, 0.25, 0.0], 	'on' ],
+#[ "chip", 		"solid", 	[0.5, 0.5, 0.5], 	'on' ],
+[ "heat sink/chip", 	"solid", 	[1.0, 0.5, 0.0], 	'on' ],
+[ "heat sink", 		"solid", 	[1.0, 0.5, 0.0], 	'on' ] ]
+
+for srfProp in srfMap:
+	srf = vis.getSrfActor( srfProp[0] )
+	srf.display( srfProp[1] )
+	srf.color( srfProp[2][0], srfProp[2][1], srfProp[2][2] )
+	srf.setVisibility( srfProp[3] )
+
+#----- Create Views
+
+imgFct  = 2.75
+width   = int( imgFct * 600 )
+height  = int( imgFct * 400 )
+
+vis.home( )
+vis.fit( )
+
+vis.alignDir( dir = '-y' )
+vis.rotate( dir = '-y', angle = 45 )
+vis.rotate( dir = '-z', angle = 45 )
+vis.rotate( dir = '+x', angle = 45 )
+vis.zoom( -0.20 )
+fname = vis.saveImage( width = width, height = height, fileName = "IsometricView.png" )
+rep.addFigure( fname, "center", "Isometric View", 0.85 / imgFct, "fig:isometric" )
+
+vis.home( )
+vis.fit( )
+vis.zoom( -0.50 )
+fname = vis.saveImage( width = width, height = height, fileName = "TopView.png" )
+rep.addFigure( fname, "center", "Top View", 0.85 / imgFct, "fig:top" )
+
+vis.home( )
+vis.fit( )
+vis.alignDir( dir = '-x' )
+vis.rotate( dir = '+x', angle = 90 )
+vis.zoom( -0.85 )
+fname = vis.saveImage( width = width, height = height, fileName = "FrontView.png" )
+rep.addFigure( fname, "center", "Front View", 0.85 / imgFct, "fig:front" )
+
+vis.home( )
+vis.fit( )
+vis.alignDir( dir = '-y' )
+vis.zoom( -0.50 )
+fname = vis.saveImage( width = width, height = height, fileName = "SideView.png" )
+rep.addFigure( fname, "center", "Side View", 0.85 / imgFct, "fig:side" )
+
+rep.newPage( )
+
+#===========================================================================
+# Interactive View
+#===========================================================================
+
+rep.addSubSubSection( "Interactive View" )
+rep.addText( """Click on the following control to activate it.
+You may use mouse buttons or toolbar controls to manipulate
+the interactive 3D model of the heat sink problem.""" )
+
+rep.addU3DModel( sceneGraph = vis.getSceneGraph( ), fct = 0.99999999 )
+
+
+rep.addSubSection( "Mesh Generation" )
+
+rep.addText( """
+The quality of grid in general plays an important role on the 
+flow and thermal physics for a CFD solver. Once the CAD model of the
+heatsink had been created, we discretize the geometry to form a grid that 
+is reasonable to capture the dominant flow features. In particular, 
+we need to pay attention in the meshing near the wall of heatsink and the
+optimized volumetric mesh distribution.
+""" )
+
+rep.newPage( )					
+
+#===========================================================================
+# Results
+#===========================================================================
+
+rep.addSection( "Results" )	
+
+#----- Table 1 (Temperature)
+
+solCases 		= acs.getArray( par = 'solution_cases', path = node )
+airSpeed		= solCases[: , 0]
+airTemp			= solCases[: , 1]
+chipPower		= solCases[: , 2]
+
+cases 			= range( 1,  len ( solCases ) + 1 )
+
+chipSinkTemp 	= adb.getOsiValues( "heat sink/chip", "temperature", "oC" )
+chipBrdTemp 	= adb.getOsiValues( "board/chip", "temperature", "oC" )
+
+chipSinkHeat 	= adb.getOsiValues( "heat sink/chip", "heat_flux", "W" ) * -1
+chipBoardHeat 	= adb.getOsiValues( "board/chip", "heat_flux", "W" ) * -1
+
+sinkTemp 	= adb.getOsiValues( "board", "temperature", "oC" )
+
+theta_jc  	= acs.getReal( par = 'theta_jc', path = node )
+theta_jb  	= acs.getReal( par = 'theta_jb', path = node )
+
+juncTemp 		= theta_jc * chipSinkHeat + chipSinkTemp
+
+caseData = [ [                  "Case",
+				"A. Speed (m/sec)",
+				"A. Temp. (oC)",
+				"C. Power (W)",
+				"C./S. Heat Flux (W)",
+				"C./B. Heat Flux (W)",
+				"C./S. Temp. (oC)",
+				"C./B. Temp. (oC)",
+				"S. Temp. (oC)",
+				"J. Temp. (oC)" ] ]
+
+for i in range( len ( solCases ) ):
+	caseData.append( [	"%d"   % cases[i],
+				"%.2f" % airSpeed[i],
+				"%.2f" % airTemp[i],
+				"%.2f" % chipPower[i],
+				"%.2f" % chipSinkHeat[i],
+				"%.2f" % chipBoardHeat[i],
+				"%.2f" % chipSinkTemp[i],
+				"%.2f" % chipBrdTemp[i],
+				"%.2f" % sinkTemp[i],
+				"%.2f" % juncTemp[i] ] )	
+	
+
+rep.addText( """
+
+Estimating how much the processor case temperature will rise given an increase in power to determining how to manage the additional heat.
+
+
+We will consider different scenarios....
+
+The cases results of temperature is given in Table \\ref{tab:cases1}.
+""" )	
+
+rep.addTable( caseData, "Cases Results of Temperature", "center", "tab:cases1",
+			  colsWidths = [0, 1.5, 1, 1, 2, 2, 1.25, 1.25, 1.25, 1.25] )
+			
+rep.beginBullet( )
+rep.addItem( "A. : Air\\\\C. : Chip\\\\S. : Sink\\\\B. : Board\\\\J. : Junction\\\\Temp. : Temperature",
+			 "The Legend of Table \\ref{tab:cases1}:\\\\" )
+rep.endBullet( )
+			
+rep.newPage( )
+
+#----- Table 2 (Theta)
+
+chipSinkTemp.ravel( )
+chipSinkHeat.ravel( )
+sinkTemp.ravel( )
+juncTemp.ravel( )
+
+theta_cs = ( chipSinkTemp - sinkTemp ) / chipSinkHeat
+theta_sa = ( sinkTemp - airTemp ) / chipSinkHeat
+theta_ca = ( chipSinkTemp - airTemp ) / chipSinkHeat
+theta_ja = ( juncTemp - airTemp ) / chipPower
+
+
+rep.addEquation( r'\theta_{sa} = ( sinkTemp - airTemp ) / chipSinkHeat' )
+
+
+caseData2 = [ [                 "Case",
+				 "A. Speed (m/sec)",
+				 "A. Temp. (oC)",
+				 "C. Power (W)",
+				 "$\\theta_{JC}$ (oC/W)",
+				 "$\\theta_{JB}$ (oC/W)",
+				 "$\\theta_{CS}$ (oC/W)",
+				 "$\\theta_{SA}$ (oC/W)",
+				 "$\\theta_{CA}$ (oC/W)",
+				 "$\\theta_{JA}$ (oC/W)" ] ]
+
+for i in range( len ( solCases ) ):
+	caseData2.append( [ "%d"   % cases[i],
+					    "%.2f" % airSpeed[i],
+					    "%.2f" % airTemp[i],
+					    "%.2f" % chipPower[i],
+					    "%.2f" % theta_jc,
+					    "%.2f" % theta_jb,
+					    "%.2f" % theta_cs[i],
+					    "%.2f" % theta_sa[i],
+					    "%.2f" % theta_ca[i],
+					    "%.2f" % theta_ja[i] ] )	
+	
+rep.addText( """The cases results of $\\theta$ is given in Table \\ref{tab:cases2}.""" )	
+rep.addTable( caseData2, "Cases Results of $\\theta$", "center", "tab:cases2",
+			  colsWidths = [0, 1.5, 1, 1, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5] )
+
+rep.beginBullet( )
+rep.addItem( "A. : Air\\\\C. : Chip\\\\Temp. : Temperature",
+			 "The Legend of Table \\ref{tab:cases2}:\\\\" )
+rep.endBullet( )
+			
+rep.newPage( )
+
+#----- Temperatures Curve
+
+tempCurveMap  = [ 	                [ "Air", 	airTemp 	 ],
+					[ "Junction", 	juncTemp 	 ],
+					[ "Chip/Sink", 	chipSinkTemp     ],
+					[ "Sink", 	sinkTemp 	 ],
+					[ "Chip/Board",	chipBrdTemp      ] ]
+
+tempCurves = []
+for name, temp in tempCurveMap:	
+	tempCurves.append( Curve( cases, temp, name = name + " Temp.", color = "auto" ) )
+
+fname     = Plot2D( tempCurves, width = width, height = height,
+					xLabel = "Case Number", yLabel = "Temperature (oC)",
+					legendPos = "best", resScale = imgFct)	
+					
+rep.addText( """The "Temperature" vs. "Case Number" curve is given in Figure \\ref{fig:tempcase}.
+
+
+
+The graph shows the slopes for change in temperature over the range ...for ...nearly linear and parallel to each other...
+""" )
+rep.addFigure( fname, "center", "Temperatures", 1.2 / imgFct, "fig:tempcase" )
+
+rep.newPage( )
+
+#----- Thermal Resistances Curve
+
+trCurveMap  = [ [ "$\\theta_{JC}$", [ theta_jc for i in range( len( solCases ) ) ] ],
+				[ "$\\theta_{JB}$", [ theta_jb for i in range( len( solCases ) ) ] ],
+				[ "$\\theta_{CS}$", theta_cs ],
+				[ "$\\theta_{SA}$",	theta_sa ],
+				[ "$\\theta_{CA}$",	theta_ca ],
+				[ "$\\theta_{JA}$",	theta_ja ] ]
+				
+trCurves = []
+for name, tr in trCurveMap:	
+	trCurves.append( Curve( cases, tr, name = name, color = "auto" ) )
+
+fname     = Plot2D( trCurves, width = width, height = height,
+					xLabel = "Case Number", yLabel = "Thermal Resistance (oC/W)",
+					legendPos = "best", resScale = imgFct )	
+					
+rep.addText( """The "Thermal Resistance" vs. "Case Number" curve is given in Figure \\ref{fig:trcase}.""" )
+rep.addFigure( fname, "center", "Thermal Resistances", 1.2 / imgFct, "fig:trcase" )
+
+rep.newPage( )
+
+#===========================================================================
+# Case Results
+#===========================================================================
+
+#------- Setup Scene graph and cut plane
+
+nSrfs	= vis.getNSrfs( )
+for i in range( nSrfs ):
+	vis.getSrfActor( i ).setVisibility( 'off' )
+	
+cmap	= vis.addCmapLegendActor( text        = "Temperature",
+                                  minVal      = 30,
+                                  maxVal      = 45,
+                                  nVals	      = 5,
+								  textFontSize= 20,
+								  valFontSize = 20,
+				  xpos	      = 0.09  )
+vis.setCmap( )
+
+wall 		= vis.getSrfActor( 'wall' )
+
+hs 		= vis.getVolActor( 'heat sink' )
+hsBbox		= hs.bndBox( )
+xmin		= hsBbox[0][0]
+xmax		= hsBbox[0][1]
+ymin		= hsBbox[1][0]
+ymax		= hsBbox[1][1]
+zmin		= hsBbox[2][0]
+zmax		= hsBbox[2][1]
+ymid		= ( ymin + ymax ) / 2
+	
+cpl			= vis.addCPlane( [xmin, ymid, zmin],
+					 [xmax, ymid, zmin],
+					 [xmax, ymid, zmax],
+					 "mid-y-plane" )
+					
+points  	= vis.genPoints( type    	= "2d_grid",
+				 point1  	= [xmin, ymid, zmin],
+				 point2  	= [xmax, ymid, zmin],
+				 point3  	= [xmax, ymid, zmax],
+				 nXPoints 	= 100,
+				 nYPoints 	= 100 )
+tufts   	= vis.addTufts( points, "mid-y-plane-tufts" , 'heat sink' )
+					
+#------- Get the result of all cases
+
+nSteps	= vis.getNSteps( )
+for i in range( nSteps ):
+	caseNum = i + 1			
+	
+	vis.setStepId( i )
+	
+	fnames = [ [], [] ]
+	
+	#----- Surface Temperature
+
+	varName		= "temperature"
+	minVal,maxVal	= 290, 330
+
+	vis.setSclrVar( varName )
+	vis.setSclrLimits( minVal, maxVal )
+	cmap.text( varName.capitalize() )
+	cmap.minVal( minVal )
+	cmap.maxVal( maxVal )
+	
+	wall.setVisibility( 'on' )
+	cpl.setVisibility( 'off' )
+	tufts.setVisibility( 'off' )
+	
+	wall.display( 'contour' )
+	
+	vis.home( )
+	vis.fit( )
+	vis.alignDir( dir = '-y' )
+	vis.rotate( dir = '-y', angle = 45 )
+	vis.rotate( dir = '-z', angle = 45 )
+	vis.rotate( dir = '+x', angle = 45 )
+	vis.zoom( -0.20 )
+
+	fname  = vis.saveImage( width = width, height = height)
+	label  = "Case %d. %s" % ( caseNum, "Surface Temperature" )
+	fnames[0].append( ( fname, label ) )
+	
+	#----- Temperature on Cut Plane
+	
+	wall.setVisibility( 'on' )
+	cpl.setVisibility( 'on' )
+	
+	cpl.display( 'contour' )
+	
+	vis.home( )
+	vis.fit( )	
+	vis.rotate( dir = '+x', angle = 90 )
+	vis.zoom( -0.20 )	
+
+	fname  = vis.saveImage( width = width, height = height )
+	label  = "Case %d. %s" % ( caseNum, "Temperature on Cut Plane" )
+	fnames[0].append( ( fname, label ) )
+		
+	#----- Pressure on Cut Plane	
+	
+	varName		= "pressure"
+	minVal,maxVal	= -2, 2
+	
+	vis.setSclrVar( varName )
+	vis.setSclrLimits( minVal, maxVal )
+	cmap.text( varName.capitalize() )
+	cmap.minVal( minVal )
+	cmap.maxVal( maxVal )
+	
+	cpl.display( 'contour' )
+	
+	fname = vis.saveImage( width = width, height = height )
+	label  = "Case %d. %s" % ( caseNum, "Pressure on Cut Plane" )
+	fnames[1].append( ( fname, label ) )
+	
+	#----- Velocity on Cut Plane
+	
+	'''cmap.text( "Velocity" )	
+	
+	tufts.setVisibility( 'on' )
+	
+	tufts.color( 0, 0, 0 )
+	tufts.pointSize( 7 )
+	
+	tufts.velDisplay( True )
+	
+	vis.setVecVar( "velocity" )	
+	vis.setSclrLimits( 30, 55 )
+	
+	fname = vis.saveImage( width = width, height = height )
+	label  = "Case %d. %s" % ( caseNum, "Velocity on Cut Plane" )
+	fnames[1].append( ( fname, label ) )'''	
+		
+	#----- Add to report
+	
+	rep.addSubSection( "Case %d Results" % caseNum )
+	
+	rep.addText( "The results of case %d are given in Figure \\ref{fig:case %d}." % ( caseNum, caseNum ) )
+
+	rep.beginBullet( )
+	rep.addItem( "", "%s: %.2f m/sec" % ( "Air Speed", airSpeed[i] ) )
+	rep.addItem( "", "%s: %.2f oC" % ( "Air Temperature", airTemp[i] ) )
+	rep.addItem( "", "%s: %.2f W" % ( "Chip Power", chipPower[i] ) )
+	rep.addItem( "", "%s: %.2f oC" % ( "Junction Temperature", juncTemp[i] ) )
+	rep.endBullet( )		
+	
+	txt = "Case %d" % caseNum
+	rep.addFigures( fnames, "center", txt, 0.55 / imgFct, "fig:case %d" % caseNum, border = False )	
+
+	rep.newPage( )
+
+vis.delCmapLegendActor( cmap )
+vis.delCplActor( cpl.name )
+vis.delTufts( "mid-y-plane-tufts" )
+
+#===========================================================================
+# Conclusions
+#===========================================================================
+
+rep.addSection( "Conclusions" )	
+
+rep.addText( """
+
+Successful CFD modeling of heatsink.
+""" )	
+
+#===========================================================================
+# Close the report and make PDF
+#===========================================================================
+
+rep.close( )
+
+rep.writePdf( )
+
+#===========================================================================
+# Remove temporary files
+#===========================================================================
+
+#try:
+#	dir  = "Figures"
+#	for file in os.listdir( "Figures" ):
+#		os.remove( os.path.join( dir, file ) )
+#	os.rmdir( dir )
+#except:
+#	pass

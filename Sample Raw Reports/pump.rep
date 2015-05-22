@@ -1,0 +1,429 @@
+#===========================================================================
+#
+# "pump.rep": Generate a report for the pump problem
+#
+# 	To get a report, execute:
+#		acuReport -file pump.rep
+#
+#===========================================================================
+
+#===========================================================================
+# Open a document
+#===========================================================================
+import string
+
+rep	= Report( "pump.tex", fullPage = False )
+
+#===========================================================================
+# Open the model and solution
+#===========================================================================
+
+acs	= Acs()
+
+repAcs	= ReportAcs(rep, acs)
+
+adb	= Adb()
+
+#===========================================================================
+# Set up the vis object
+#===========================================================================
+
+vis	= AcuVis()
+
+vis.setBgColor( color = (1,1,1) )
+nSrfs	= vis.getNSrfs()
+nVols	= vis.getNVols()
+
+imp	= vis.getVolActor( "impeller" )
+impBbox	= imp.bndBox()
+
+xmin	= impBbox[0][0]
+xmax	= impBbox[0][1]
+ymin	= impBbox[1][0]
+ymax	= impBbox[1][1]
+zmin	= impBbox[2][0]
+zmax	= impBbox[2][1]
+ymid	= ( ymin + ymax ) / 2
+
+fan	= vis.getSrfActor("impeller")
+cpl	= vis.addCPlane(	[xmin, ymid, zmin],
+				[xmax, ymid, zmin],
+				[xmax, ymid, zmax],
+				"mid-plane" )
+cpl.setVisibility( 'off' )
+
+#===========================================================================
+# Title page
+#===========================================================================
+
+title	= adb.get( "title" )
+
+rep.addAcusimLogo( length="400" )
+rep.addSpace( 2 )
+rep.addTitle("Pump Analysis Performed by AcuSolve\\\\" + title)
+rep.addAuthors( "Dr. Farzin Shakib" )
+rep.addText( "ACUSIM Software, Inc.", justify="center" )
+rep.addDate()		# with no argument: pick up the current date
+rep.fillVSpace()	# push text to the end
+rep.addText( "\\emph{ACUSIM Software, Inc. 2685 Marine Way, Suite 1421, " +
+	"Mountain View, California 94043}", "center")
+rep.addText("Tel: (650) 988-9700 Fax: (650) 988-9770 " +
+	"\\href{mailto:info@acusim.com}{info@acusim.com} " +
+	"http://www.acusim.com", "center")
+
+rep.newPage()
+rep.addTableOfContent()
+rep.newPage() 
+
+#===========================================================================
+# Background
+#===========================================================================
+
+rep.addSection( "Background" )
+
+rep.addText("""
+Some background information.
+""")
+
+rep.newPage()
+
+#===========================================================================
+# Problem description
+#===========================================================================
+
+rep.addSection( "Problem description" )
+
+for i in range(nVols): vis.getVolActor(i).setVisibility('off')
+for i in range(nSrfs): vis.getSrfActor(i).setVisibility('on')
+for i in range(nSrfs): vis.getSrfActor(i).display('solid')
+
+vis.home()
+vis.alignDir( dir='y-' )
+fname	= vis.saveImage( width=600, height=400 )
+
+rep.addText("""
+The geometry is given in Figure \\ref{fig:geom}.
+""")
+
+rep.addFigure( fname, "center", "Geometry of the problem", 1.0, "fig:geom" )
+
+rep.newPage()
+
+#===========================================================================
+# Mesh
+#===========================================================================
+
+rep.addSubSection("Mesh")
+
+for i in range(nSrfs): vis.getSrfActor(i).setVisibility('off')
+fan.setVisibility('on')
+fan.display( 'solid_wire' )
+cpl.setVisibility( 'on' )
+cpl.display( 'solid_wire' )
+vis.home()
+vis.alignDir( dir='y-' )
+vis.rotate( dir ="x+", angle = -45. )
+vis.rotate( dir ="y+", angle = +45. )
+vis.fit()
+
+fname	= vis.saveImage( width=600, height=400 )
+
+rep.addText("""
+The geometry is given in Figure \\ref{fig:mesh}.
+""")
+
+rep.addFigure( fname, "center", "Geometry of the mesh", 1.0 , "fig:mesh" )
+
+rep.newPage()
+
+#===========================================================================
+# Problem description
+#===========================================================================
+
+rep.addSubSection("Solver Settings")
+
+nodeElm =  ROOT + RS + 'Model' + RS + 'Volumes' + RS + 'impeller' + RS +\
+'ELEMENT_SET'
+matName	= acs.getRef( 'material_model', nodeElm )
+rffName	= acs.getRef( 'reference_frame', nodeElm )
+
+nodeRff	= ROOT + RS + 'REFERENCE_FRAME' + RS + rffName
+rot	= acs.getArray( 'angular_velocity', nodeRff )
+rotz	= abs( rot[2] )
+# add the function convertUnit to rep
+rotz	= rep.convertUnit( rotz, "rad/sec", "RPM" )
+
+rep.addText( "Material model is given by:\\\\" )
+repAcs.addMaterialModel(matName )
+
+rep.addText( "Rotational speed is %.2g" % rotz )
+
+#===========================================================================
+# Get the mass flux as a function of pressure
+#===========================================================================
+
+inflow = None
+for name in adb.getOsiNames():
+    if name == "inflow":
+        inflow = name		
+if inflow == None:
+    raise "Error", "inflow surface pressure not found"
+	
+pres = None
+mass = None
+for name in adb.getOsiVarNames():
+    if name == "pressure":
+        pres = adb.getOsiValues( inflow, name )
+    if name == "mass_flux":
+        mass = adb.getOsiValues( inflow, name )		
+if pres == None:
+    raise "Error", "average surface pressure not found"
+if mass == None:
+    raise "Error", "mass flux pressure not found"
+   
+mpCurve    = Curve (  pres, mass, name = "Mass Flux",  color = "Red"  )
+    
+fname     = Plot2D( mpCurve, width=600, height=400, 
+					xLabel = "Pressure Drop (Pa)",
+					yLabel = "Mass Flux (kg/sec)") 
+
+rep.addFigure( fname, "center", "Fan performance", 1.0, "fig:mp")
+
+mpData	= [ ("Pressure Drop (Pa)", "Mass Flux (Kg/sec)") ]
+for i in range(len(pres)):
+    mpData.append( ("%.2f" % pres[i], "%.2f" % mass[i]) )
+
+rep.addTable( mpData, "Fan performance", "center", "tab:mp" )
+
+rep.addText( """
+The fan performance curve is given in Figure \\ref{fig:mp} and Table
+\\ref{tab:mp}
+""" )
+
+rep.newPage()
+
+#===========================================================================
+# Results
+#===========================================================================
+
+rep.addSection("Results")
+
+rep.addText("""
+The results are given in the following figures.
+""")
+
+#---------------------------- Pressure
+
+rep.addText("""
+The pressure distribution are shown in the following figures.
+""")
+
+vis.toggleLogo()
+cmap    = vis.addCmapLegendActor(     text        = "Pressure",
+                                      minVal      = 0,
+                                      maxVal	  = 4,
+                                      nVals		  = 4,
+								      xpos		  = 0.08  )
+vis.setCmap(	)
+vis.setSclrVar( "pressure" )
+fan.setVisibility('on')
+fan.display( 'contour' )
+cpl.setVisibility( 'on' )
+cpl.display( 'contour' )
+vis.alignDir( dir='y-' )
+vis.rotate( dir ="x+", angle = -45. )
+vis.rotate( dir ="y+", angle = +45. )
+vis.fit()
+vis.zoom(-0.4)
+
+nSteps	= vis.getNSteps()
+	
+fnames  = []
+txt     = "Pressure contour on center plane"
+for i in range(nSteps):    
+    vis.setStepId( i )    
+    fname  = vis.saveImage( width=600, height=400 )       
+    label  = "%s. mass flux = %.4g" % ( string.ascii_letters[i], mass[i] )    
+    j = i / 2    
+    if i % 2 == 0:        
+	    fnames.append( [] )    
+    fnames[j].append(  ( fname, label ) )	
+rep.addFigures( fnames, "center", txt, 0.35, "fig:pres", colsWidths = (7, 7), border = False )
+
+rep.newPage()
+
+#---------------------------- Velocity
+
+rep.addText("""
+The velocity distribution are shown in the following figures.
+""")
+						
+vis.delCmapLegendActor(               cmap                    )
+	
+vis.setVecVar( "velocity" )
+fan.setVisibility('on')
+fan.display( 'wireframe' )
+cpl.setVisibility( 'off' )
+cpl.setVelScale(   0.005 )
+cpl.velDisplay( True )
+vis.alignDir( dir='y-' )
+vis.rotate( dir ="x+", angle = -20. )
+vis.rotate( dir ="y+", angle = +20. )
+vis.fit()
+vis.zoom(-0.4)
+
+fnames  = []
+txt     = "Velocity vector on center plane"
+for i in range(nSteps):    
+    vis.setStepId( i )    
+    fname  = vis.saveImage( width=600, height=400 )       
+    label  = "%s. mass flux = %.4g" % ( string.ascii_letters[i], mass[i] )    
+    j = i / 2    
+    if i % 2 == 0:        
+	    fnames.append( [] )    
+    fnames[j].append(  ( fname, label ) )	
+rep.addFigures( fnames, "center", txt, 0.35, "fig:vel", border = False )
+
+rep.newPage()
+
+#---------------------------- Clipping
+
+rep.addText("""
+Several samples of clipping are shown in the following figures.
+""")
+
+for id in range(vis.getNVols()):
+	vis.getVolActor(id).setVisibility('off')
+for id in range(vis.getNSrfs()):
+    vis.getSrfActor(id).setVisibility('off')
+
+imp = vis.getVolActor( "impeller" )
+imp.setVisibility('on')
+
+bndBox	= vis.bndBox( )
+
+xmin	= bndBox[0][0]
+xmax	= bndBox[0][1]
+ymin	= bndBox[1][0]
+ymax	= bndBox[1][1]
+zmin	= bndBox[2][0]
+zmax	= bndBox[2][1]
+
+xmid	= ( xmin + xmax ) / 2
+ymid	= ( ymin + ymax ) / 2
+zmid	= ( zmin + zmax ) / 2
+
+vis.home()
+vis.alignDir( dir='-y' )
+vis.rotate( dir ="x+", angle = -45 )
+vis.rotate( dir ="z+", angle = +22.5 )
+vis.fit()
+vis.zoom( -0.3 )
+
+fnames  = []
+
+#----- Sample 'up' Clip Plane
+
+fnames.append( [] )
+
+clipPlane = vis.addClipPlane( ( xmid, ymid, zmid ), 
+							  ( 0, 0, 1 ),						  
+							  side = 'up',
+							  name = "sample-up-clip-plane" )
+				 
+clipPlane.active( True )
+
+vis.setClipTrans( transparent = True )
+fname = vis.saveImage( width = 600, height = 400, fileName = "Fully-TransparentUPClipPlane.png" ) 
+label = "Fully-Transparent 'Up' Clip Plane"
+fnames[0].append( ( fname, label ) )
+
+vis.delClipPlane( clipPlane )
+
+#----- Sample 'down' Clip Plane
+
+clipPlane = vis.addClipPlane( ( xmid, ymid, zmid ), 
+							  ( 0, 0, 1 ),
+							  side = 'down',
+							  name = "sample-down-clip-plane" )
+				 
+clipPlane.active( True )
+
+vis.setClipTrans( transVal = 0.9 )
+fname = vis.saveImage( width = 600, height = 400, fileName = "90-TransparentDownClipPlane.png" )
+label = "90\\%-Transparent 'Down' Clip Plane"
+fnames[0].append( ( fname, label ) )
+
+clipPlane.delete( )
+
+#----- Sample 'max' Clip Box
+
+fnames.append( [] )
+
+clipBox = vis.addClipBox( xmid, xmax,
+						  ymid, ymax,
+						  zmin, zmid,
+						  name = "sample-clip-box" )
+						  
+clipBox.active( True )		
+
+vis.setClipMode( mode = 'max' )
+
+vis.setClipTrans( transparent = True )						  
+fname = vis.saveImage( width = 600, height = 400, fileName = "Fully-TransparentMaxClipBox.png" )
+label = "Fully-Transparent 'Max' Clip Box"
+fnames[1].append( ( fname, label ) ) 
+				
+vis.setClipTrans( transVal = 0.9 )
+fname = vis.saveImage( width = 600, height = 400, fileName = "90-TransparentMaxClipBox.png" )
+label = "90\\%-Transparent 'Max' Clip Box"
+fnames[1].append( ( fname, label ) ) 
+
+#----- Sample 'min' Clip Box
+
+fnames.append( [] )
+
+vis.setClipMode( mode = 'min' )
+
+vis.setClipTrans( transparent = True )	
+fname = vis.saveImage( width = 600, height = 400, fileName = "Fully-TransparentMinClipBox.png" )
+label = "Fully-Transparent 'Min' Clip Box"
+fnames[2].append( ( fname, label ) ) 
+
+clipBox.prependClipPlane( ( xmid, ymid, zmid ),
+						  ( 0, 0, 1 ),
+						  side = 'down' )
+						  
+vis.setClipTrans( transVal = 0.9 )
+fname = vis.saveImage( width = 600, height = 400, fileName = "90-TransparentPrepMinClipBox.png" )
+label = "90\\%-Transparent [Prep by a Clip-Plane] 'Min' Clip Box"
+fnames[2].append( ( fname, label ) ) 
+
+clipBox.delete( )
+
+#----- Add clip shapes
+
+txt = "Clipping Samples"
+rep.addFigures( fnames, "center", txt, 0.35, "fig:clp", border = False )
+
+rep.newPage()
+
+#===========================================================================
+# Conclusions
+#===========================================================================
+
+rep.addSection("Conclusions")
+
+rep.addText("""
+Some conclusion goes here
+""")
+
+#===========================================================================
+# Close the report and make PDF, RTF and HTML
+#===========================================================================
+
+rep.close()
+
+rep.writePdf()
+rep.writeRtf()
+rep.writeHtml()
